@@ -6,11 +6,8 @@
   "main": "content.js",
   "scripts": {
     "build": "node generate-manifest.js",
-    "build:manifest": "node generate-manifest.js",
-    "dev": "node generate-manifest.js",
     "lint": "eslint content.js generate-manifest.js",
-    "format": "prettier --write *.js *.json *.md",
-    "setup": "npm run build && echo 'Extension ready for installation'"
+    "format": "prettier --write *.js *.json *.md"
   },
   "keywords": [
     "chrome-extension",

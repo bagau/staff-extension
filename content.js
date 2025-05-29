@@ -35,7 +35,7 @@ const DICTIONARY = {
 // Language configuration
 const LANGUAGE_CONFIG = {
   DEFAULT_LANGUAGE: "EN",
-  CURRENT_LANGUAGE: "EN",
+  CURRENT_LANGUAGE: "RU",
 };
 
 // Application constants

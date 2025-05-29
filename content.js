@@ -35,7 +35,7 @@ const DICTIONARY = {
 // Language configuration
 const LANGUAGE_CONFIG = {
   DEFAULT_LANGUAGE: "EN",
-  CURRENT_LANGUAGE: "EN", // Can be changed dynamically
+  CURRENT_LANGUAGE: "EN",
 };
 
 // Application constants
@@ -57,18 +57,9 @@ const CONSTANTS = {
 // Function to get localized text
 function getText(key) {
   const language = LANGUAGE_CONFIG.CURRENT_LANGUAGE;
-  const dictionary = DICTIONARY[language] || DICTIONARY[LANGUAGE_CONFIG.DEFAULT_LANGUAGE];
+  const dictionary =
+    DICTIONARY[language] || DICTIONARY[LANGUAGE_CONFIG.DEFAULT_LANGUAGE];
   return dictionary[key] || key;
-}
-
-// Function to change language
-function setLanguage(languageCode) {
-  if (DICTIONARY[languageCode]) {
-    LANGUAGE_CONFIG.CURRENT_LANGUAGE = languageCode;
-    console.log(`Language changed to: ${languageCode}`);
-  } else {
-    console.warn(`Language ${languageCode} not supported, using default: ${LANGUAGE_CONFIG.DEFAULT_LANGUAGE}`);
-  }
 }
 
 // Function to display staff-difference element

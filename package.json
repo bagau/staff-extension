@@ -1,0 +1,35 @@
+{
+  "name": "staff-extension",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chrome extension for analyzing working time data from company timetracker page",
+  "main": "content.js",
+  "scripts": {
+    "build": "node generate-manifest.js",
+    "build:manifest": "node generate-manifest.js",
+    "dev": "node generate-manifest.js",
+    "lint": "eslint content.js generate-manifest.js",
+    "format": "prettier --write *.js *.json *.md",
+    "setup": "npm run build && echo 'Extension ready for installation'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "timetracker",
+    "work-statistics",
+    "productivity",
+    "growave"
+  ],
+  "author": "Developer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/gw-staff-extension.git"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  }
+}

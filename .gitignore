@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+
+# Extension build artifacts
+dist/
+build/
+
+# Chrome extension pem files (private keys)
+*.pem
+
+# Configuration files with sensitive data
+manifest.json
+config.json
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Temporary files
+temp/
+tmp/
+
+# Test coverage
+coverage/

@@ -41,6 +41,7 @@ const LANGUAGE_CONFIG = {
 // Application constants
 const CONSTANTS = {
   WORK_HOURS_PER_DAY: 8,
+  EXCLUDED_DAYS_COUNT: 1,
   MIN_CELLS_COUNT: 4,
   TIME_REGEX: /(\d{1,2}):(\d{2})/,
   SELECTORS: {
@@ -115,6 +116,8 @@ function parseWorkingTimeData(timeTable) {
       }
     }
   });
+
+  workedDays -= CONSTANTS.EXCLUDED_DAYS_COUNT; // Exclude days from planned hours
 
   return { workedDays, totalWorkedHours };
 }

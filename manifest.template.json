@@ -3,13 +3,16 @@
   "name": "Staff Extension",
   "version": "1.0.0",
   "description": "Chrome extension for analyzing working time data from company timetracker page with statistics display",
-  "permissions": ["scripting"],
+  "permissions": ["scripting", "storage"],
   "content_scripts": [
     {
       "matches": ["https://your-company.example.com/staff/"],
       "js": ["content.js"]
     }
   ],
+  "action": {
+    "default_popup": "popup.html"
+  },
   "author": "Rafis Bagautdinov",
   "homepage_url": "https://github.com/bagau/staff-extension"
 }

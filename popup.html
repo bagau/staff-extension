@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 350px;
+        padding: 15px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+      }
+      .section {
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+      }
+      .section-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .adjustment-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      .adjustment-value {
+        min-width: 50px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .adjustment-comment {
+        flex: 1;
+        font-size: 12px;
+        color: #666;
+      }
+      .remove-btn {
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 2px 6px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+      .remove-btn:hover {
+        background: #cc0000;
+      }
+      .new-adjustment {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .new-adjustment input[type="number"] {
+        width: 60px;
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      .new-adjustment input[type="text"] {
+        flex: 1;
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      .add-btn {
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .add-btn:hover {
+        background: #45a049;
+      }
+      .no-adjustments {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-title">Корректировки плана</div>
+      <div id="required-adjustments"></div>
+      <div class="new-adjustment">
+        <input
+          type="number"
+          id="new-required-value"
+          placeholder="0"
+          step="0.5"
+          min="-24"
+          max="24"
+        />
+        <input
+          type="text"
+          id="new-required-comment"
+          placeholder="Комментарий"
+        />
+        <button class="add-btn" data-type="required">+</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Корректировки фактического времени</div>
+      <div id="actual-adjustments"></div>
+      <div class="new-adjustment">
+        <input
+          type="number"
+          id="new-actual-value"
+          placeholder="0"
+          step="0.5"
+          min="-24"
+          max="24"
+        />
+        <input type="text" id="new-actual-comment" placeholder="Комментарий" />
+        <button class="add-btn" data-type="actual">+</button>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

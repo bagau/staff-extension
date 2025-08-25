@@ -1,4 +1,3 @@
-// Internationalization dictionary
 const DICTIONARY = {
   EN: {
     ELEMENT_NOT_FOUND: "Element staff-difference not found",
@@ -32,30 +31,33 @@ const DICTIONARY = {
   },
 };
 
-// Language configuration
 const LANGUAGE_CONFIG = {
   DEFAULT_LANGUAGE: "EN",
   CURRENT_LANGUAGE: "RU",
 };
 
-// Application constants
 const CONSTANTS = {
   WORK_HOURS_PER_DAY: 8,
   MIN_CELLS_COUNT: 4,
   TIME_REGEX: /(\d{1,2}):(\d{2})/,
+  TABLE_COLUMNS: {
+    INTERVALS: 1,
+    HOURS: 3,
+  },
   SELECTORS: {
     STAFF_DIFFERENCE: "staff-difference",
     TIME_TABLE: ".time-tracker-table tbody",
-    TODAY_ROW: "tr.today",
   },
   CSS_CLASSES: {
     SUCCESS: "text-success",
     DANGER: "text-danger",
-    BG_VACATION: "bg-vacation",
+  },
+  STORAGE_KEYS: {
+    REQUIRED_ADJUSTMENTS: "requiredAdjustments",
+    ACTUAL_ADJUSTMENTS: "actualAdjustments",
   },
 };
 
-// Function to get localized text
 function getText(key) {
   const language = LANGUAGE_CONFIG.CURRENT_LANGUAGE;
   const dictionary =
@@ -63,7 +65,33 @@ function getText(key) {
   return dictionary[key] || key;
 }
 
-// Function to display staff-difference element
+async function loadAdjustments() {
+  try {
+    if (!chrome || !chrome.storage || !chrome.storage.local) {
+      return { requiredAdjustments: [], actualAdjustments: [] };
+    }
+
+    const result = await chrome.storage.local.get([
+      CONSTANTS.STORAGE_KEYS.REQUIRED_ADJUSTMENTS,
+      CONSTANTS.STORAGE_KEYS.ACTUAL_ADJUSTMENTS,
+    ]);
+
+    return {
+      requiredAdjustments:
+        result[CONSTANTS.STORAGE_KEYS.REQUIRED_ADJUSTMENTS] || [],
+      actualAdjustments:
+        result[CONSTANTS.STORAGE_KEYS.ACTUAL_ADJUSTMENTS] || [],
+    };
+  } catch (error) {
+    console.error("Error loading adjustments:", error);
+    return { requiredAdjustments: [], actualAdjustments: [] };
+  }
+}
+
+function calculateTotalAdjustment(adjustments) {
+  return adjustments.reduce((total, adj) => total + adj.value, 0);
+}
+
 function showStaffDifference() {
   const element = document.getElementById(CONSTANTS.SELECTORS.STAFF_DIFFERENCE);
 
@@ -76,14 +104,19 @@ function showStaffDifference() {
 
 showStaffDifference();
 
-// Utility function for formatting time to hours:minutes
 function formatTime(totalHours) {
-  const hours = Math.floor(totalHours);
-  const minutes = Math.round((totalHours % 1) * 60);
+  let hours = Math.floor(totalHours);
+  let minutes = Math.round((totalHours % 1) * 60);
+
+  // Handle overflow when minutes round to 60
+  if (minutes >= 60) {
+    hours += 1;
+    minutes = 0;
+  }
+
   return `${hours}:${String(minutes).padStart(2, "0")}`;
 }
 
-// Function for parsing working time data from table
 function parseWorkingTimeData(timeTable) {
   const rows = timeTable.querySelectorAll("tr");
   let workedDays = 0;
@@ -93,20 +126,17 @@ function parseWorkingTimeData(timeTable) {
     const cells = row.querySelectorAll("td");
 
     if (cells.length >= CONSTANTS.MIN_CELLS_COUNT) {
-      const intervalsCell = cells[1]; // Time intervals
-      const totalHoursCell = cells[3]; // Total time per day
+      const intervalsCell = cells[CONSTANTS.TABLE_COLUMNS.INTERVALS];
+      const totalHoursCell = cells[CONSTANTS.TABLE_COLUMNS.HOURS];
 
-      // Check for working intervals or worked time
       const hasIntervals =
         intervalsCell && intervalsCell.textContent.trim() !== "";
       const hoursText = totalHoursCell.textContent.trim();
-      const hasWorkedHours = hoursText !== "" && hoursText !== " ";
+      const hasWorkedHours = hoursText && hoursText !== " ";
 
-      // If there are intervals or worked time - count as working day
       if (hasIntervals || hasWorkedHours) {
         workedDays++;
 
-        // Parse worked hours (format "05:53")
         const timeMatch = hoursText.match(CONSTANTS.TIME_REGEX);
         if (timeMatch) {
           const hours = parseInt(timeMatch[1]);
@@ -114,57 +144,51 @@ function parseWorkingTimeData(timeTable) {
           totalWorkedHours += hours + minutes / 60;
         }
       }
-
-      if (row.classList.contains(CONSTANTS.CSS_CLASSES.BG_VACATION)) {
-        workedDays--;
-        totalWorkedHours -= 8;
-      }
     }
   });
 
   return { workedDays, totalWorkedHours };
 }
 
-// Function for calculating work time statistics
-function calculateWorkStatistics(workedDays, totalWorkedHours) {
-  const expectedHours = workedDays * CONSTANTS.WORK_HOURS_PER_DAY;
-  const percentage =
-    expectedHours > 0
-      ? ((totalWorkedHours / expectedHours) * 100).toFixed(1)
-      : 0;
+function calculateWorkStatistics(rawData, adjustments) {
+  const { workedDays, totalWorkedHours } = rawData;
+  const { requiredAdjustment, actualAdjustment } = adjustments;
 
-  const workedHoursFormatted = formatTime(totalWorkedHours);
-  const colorClass =
-    parseFloat(percentage) >= 100
-      ? CONSTANTS.CSS_CLASSES.SUCCESS
-      : CONSTANTS.CSS_CLASSES.DANGER;
+  const expectedHours = Math.max(
+    0,
+    workedDays * CONSTANTS.WORK_HOURS_PER_DAY + requiredAdjustment
+  );
+  const actualHours = Math.max(0, totalWorkedHours + actualAdjustment);
+
+  const percentage =
+    expectedHours === 0 ? 0 : ((actualHours / expectedHours) * 100).toFixed(1);
+
+  const timeDifference = actualHours - expectedHours;
+  const isAhead = timeDifference >= 0;
+  const diffFormatted = formatTime(Math.abs(timeDifference));
+
+  const statusText = isAhead
+    ? `${getText("AHEAD_PREFIX")} ${diffFormatted}`
+    : `${getText("BEHIND_PREFIX")} ${diffFormatted}`;
 
   return {
-    expectedHours,
+    workedDays,
+    expectedHours: formatTime(expectedHours),
+    actualHours: formatTime(actualHours),
     percentage,
-    workedHoursFormatted,
-    colorClass,
+    statusText,
+    isAhead,
   };
 }
 
-// Function for creating and displaying work time report
-function renderWorkReport(
-  workedDays,
-  expectedHours,
-  workedHoursFormatted,
-  percentage,
-  colorClass,
-  totalWorkedHours
-) {
-  // Calculate ahead/behind status
-  const { statusText, statusClass } = calculateProgressStatus(
-    totalWorkedHours,
-    expectedHours
-  );
+function renderWorkReport(stats) {
+  const colorClass = stats.isAhead
+    ? CONSTANTS.CSS_CLASSES.SUCCESS
+    : CONSTANTS.CSS_CLASSES.DANGER;
 
   const reportText = `
-    <br><strong>${getText("WORK_TIME_LABEL")}</strong> ${workedDays} ${getText("DAYS_WORKED_SUFFIX")}${getText("SEPARATOR")}${getText("PLAN_PREFIX")} ${expectedHours}${getText("HOURS_SUFFIX")}<br>
-    <strong>${getText("PROGRESS_LABEL")}</strong> <span class="${colorClass}">${workedHoursFormatted}${getText("HOURS_SUFFIX")} ${getText("ACTUAL_SUFFIX")}${getText("BULLET")}${percentage}${getText("PERCENT_SUFFIX")}</span>${getText("BULLET")}<strong class="${statusClass}">${statusText}</strong>
+    <br><strong>${getText("WORK_TIME_LABEL")}</strong> ${stats.workedDays} ${getText("DAYS_WORKED_SUFFIX")}${getText("SEPARATOR")}${getText("PLAN_PREFIX")} ${stats.expectedHours}${getText("HOURS_SUFFIX")}<br>
+    <strong>${getText("PROGRESS_LABEL")}</strong> <span class="${colorClass}">${stats.actualHours}${getText("HOURS_SUFFIX")} ${getText("ACTUAL_SUFFIX")}${getText("BULLET")}${stats.percentage}${getText("PERCENT_SUFFIX")}</span>${getText("BULLET")}<strong class="${colorClass}">${stats.statusText}</strong>
   `;
 
   const staffDifferenceElement = document.getElementById(
@@ -175,25 +199,7 @@ function renderWorkReport(
   }
 }
 
-// Function for calculating ahead/behind status
-function calculateProgressStatus(totalWorkedHours, expectedHours) {
-  const timeDifference = totalWorkedHours - expectedHours;
-  const isAhead = timeDifference >= 0;
-  const diffFormatted = formatTime(Math.abs(timeDifference));
-
-  const statusText = isAhead
-    ? `${getText("AHEAD_PREFIX")} ${diffFormatted}`
-    : `${getText("BEHIND_PREFIX")} ${diffFormatted}`;
-  const statusClass = isAhead
-    ? CONSTANTS.CSS_CLASSES.SUCCESS
-    : CONSTANTS.CSS_CLASSES.DANGER;
-
-  return { statusText, statusClass };
-}
-
-// Function for analyzing working time
-function analyzeWorkingTime() {
-  // Find the working time table
+async function analyzeWorkingTime() {
   const timeTable = document.querySelector(CONSTANTS.SELECTORS.TIME_TABLE);
 
   if (!timeTable) {
@@ -201,22 +207,16 @@ function analyzeWorkingTime() {
     return;
   }
 
-  // Parse data from table
-  const { workedDays, totalWorkedHours } = parseWorkingTimeData(timeTable);
+  const rawData = parseWorkingTimeData(timeTable);
+  const { requiredAdjustments, actualAdjustments } = await loadAdjustments();
 
-  // Calculate statistics
-  const { expectedHours, percentage, workedHoursFormatted, colorClass } =
-    calculateWorkStatistics(workedDays, totalWorkedHours);
+  const adjustments = {
+    requiredAdjustment: calculateTotalAdjustment(requiredAdjustments),
+    actualAdjustment: calculateTotalAdjustment(actualAdjustments),
+  };
 
-  // Display report
-  renderWorkReport(
-    workedDays,
-    expectedHours,
-    workedHoursFormatted,
-    percentage,
-    colorClass,
-    totalWorkedHours
-  );
+  const stats = calculateWorkStatistics(rawData, adjustments);
+  renderWorkReport(stats);
 }
 
 analyzeWorkingTime();
